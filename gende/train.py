@@ -18,10 +18,10 @@ from .models import create_model
 from .plot import plt_export, plt_confusion_matrix
 from .session import TrainSession
 
-_DEFAULT_TEXT_COLUMN = 'desc_en'
+_DEFAULT_TEXT_COLUMN = 'desc'
 _DEFAULT_DATA_COLUMNS = [
-    '生效阶段', '伤害相关', '回复血量',
-    '元素骰子', '元素类型', '元素充能', '角色专用',
+    'plant_type', 'able_to_hurdle_zombies', 'one_time',
+    'damage_area', 'cd', 'damage', 'produce', 'attack_interval', 'life', 'cost'
 ]
 _torch_cat = FastTreeValue.func(subside=True)(torch.cat)
 
@@ -29,7 +29,7 @@ _torch_cat = FastTreeValue.func(subside=True)(torch.cat)
 def train(workdir: str, model_name: str,
           datasource: str, text_column: str = _DEFAULT_TEXT_COLUMN, data_columns: List[str] = None,
           max_epochs: int = 500, learning_rate: float = 0.001, weight_decay: float = 1e-3, batch_size: int = 16,
-          eval_epoch: int = 1, val_ratio: float = 0.2, token_size: int = 256,
+          eval_epoch: int = 1, val_ratio: float = 0.2, token_size: int = 256, train_eval_all: bool = False,
           seed: Optional[int] = None):
     if seed is not None:
         # native random, numpy, torch and faker's seeds are includes
@@ -54,7 +54,10 @@ def train(workdir: str, model_name: str,
     )
     test_cnt = int(len(dataset) * val_ratio)
     train_cnt = len(dataset) - test_cnt
-    train_dataset, val_dataset = random_split(dataset, [train_cnt, test_cnt])
+    if not train_eval_all:
+        train_dataset, val_dataset = random_split(dataset, [train_cnt, test_cnt])
+    else:
+        train_dataset = val_dataset = dataset
 
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=False)
     test_dataloader = DataLoader(val_dataset, batch_size=batch_size)
